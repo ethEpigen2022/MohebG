@@ -1,0 +1,62 @@
+---
+title: "assignment"
+author: "Moheb Ghobrial"
+date: "3/14/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r}
+  library(AnnotationHub)
+  library(ensembldb)
+  library(GenomicRanges)
+```
+
+```{r}
+MMensdb <- ah[["AH89211"]]
+```
+
+```{r}
+MMensdb_dna_sm <- ah[["AH88477"]]
+```
+
+```{r}
+DM_dnasm_seq <- ah[["AH90691"]]
+```
+
+```{r}
+txs <- transcripts(MMensdb)
+txsDF <- as.data.frame(txs)
+View(txsDF)
+```
+
+```{r}
+library("dplyr")
+txsDF %>% group_by(tx_biotype) %>% summarize(count=n())
+```
+
+
+```{r}
+txbiotypedist = txsDF %>% group_by(tx_biotype) %>% summarize(count=n())
+```
+
+```{r}
+
+barplot(txbiotypedist$count, main="Frequency of different transcript types",xlab="Transcript type",names.arg=txbiotypedist[[1]],las=2,cex.names=0.4,mgp=c(0,1,0))
+
+```
+
+
+```{r}
+PTN <- txsDF[, c("width", "tx_biotype")]
+PTN2 <- subset(PTN, tx_biotype == "protein_coding")
+```
+
+
+```{r}
+hist(PTN2$width,xlab="length",main="Protein coding genes size distribution",breaks=1000)
+```
+
+
+
+
