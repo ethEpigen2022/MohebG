@@ -1,0 +1,175 @@
+---
+title: "assignment_week3"
+author: "Moheb Ghobrial"
+date: "3/17/2022"
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+```{r}
+.libPaths("C:/Users/mohebg/Desktop/R_packages")
+  library(AnnotationHub)
+  library(Rsubread)
+  library(rtracklayer)
+  library(Biostrings)
+  library(Rfastp)
+  library(epiwraps)
+library(utils)
+```
+
+
+```{r}
+ah <- AnnotationHub()
+ensdb <- ah[["AH89211"]]
+```
+
+```{r}
+
+download.file("https://www.encodeproject.org/files/ENCFF001LJN/@@download/ENCFF001LJN.fastq.gz" , dest="raw/p300.fastq.gz")
+
+
+```
+```{bash}
+.check_if_unix <<- function() {
+  return(NULL)
+}
+assignInNamespace(".check_if_unix", .check_if_unix, ns = "fastqcr")
+```
+
+
+
+```{bash}
+
+conda install -c bioconda fastqc
+
+```
+```{r}
+dir.create("rfastp.trimmed")
+```
+
+```{r}
+qc <- Rfastp::rfastp("p300.fastq.gz", outputFastq="rfastp.trimmed/Myc", 
+                     maxNfilter=0, thread=4, overrepresentationAnalysis=TRUE)
+```
+
+```{r}
+Rfastp::curvePlot(qc, curve="content_curves")
+```
+
+
+
+```{r}
+# Alignment
+## Using Rsubread
+### Building a genome index for mapping
+
+genome <- ah[["AH82552"]]
+
+```
+
+```{r}
+dir.create("genome")
+```
+
+
+```{r}
+export(import.2bit(genome), "genome/genome.fasta.gz", compress=TRUE)
+```
+
+
+```{r}
+Rsubread::buildindex("genome/rsubread", reference="genome/genome.fasta.gz")
+```
+```{r}
+dir.create("aligned")
+align.stats <- Rsubread::align(index="genome/rsubread", type="dna",
+                               output_file="aligned/Myc.bam",
+                               readfile1="rfastp.trimmed/Myc_R1.fastq.gz", 
+                               nthreads=4, sortReadsByCoordinates=TRUE)
+align.stats
+```
+
+```{r}
+
+# Peak calling
+peaks <- callPeaks("aligned/Myc.bam")
+# if we want to save it as a bed file:
+rtracklayer::export.bed(peaks, "peaks/peaks.bed")
+
+```
+
+
+```{r}
+bam <- GenomicAlignments::readGAlignments("aligned/Myc.bam")
+```
+
+
+```{r}
+# Generating coverage tracks
+dir.create("tracks")
+bam2bw("aligned/Myc.bam", "tracks/Myc_full.bw", binWidth=10, extend=50, scaling=TRUE, paired = FALSE,splitByChr = 1)
+bam2bw("aligned/Myc.bam", "tracks/Myc.bw", binWidth=10, extend=50, scaling=TRUE, paired = FALSE, splitByChr = 2)
+```
+
+
+
+```{r}
+plotSignalTracks(list(full="tracks/Myc_full.bw", binned="tracks/Myc.bw"), region=peaks[1], extend=500)
+```
+
+```{r}
+plotSignalTracks(list(signal="tracks/Myc.bw", peaks=peaks), region="pfkfb3", ensdb=ensdb)
+```
+
+
+
+```{r}
+# Basic peak annotation
+
+```{r}
+peakAnno <- annotateRegions(peaks, ensdb)
+table(peakAnno$class)
+```
+
+
+
+
+
+
+
+
+```{r}
+length(peaks)
+head(peaks)
+
+#setting a cut off for the number of peaks
+strong_peaks <- peak[]
+
+```
+
