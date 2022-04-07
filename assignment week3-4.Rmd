@@ -1,0 +1,205 @@
+---
+title: "assignment_week3"
+author: "Moheb Ghobrial"
+date: "3/17/2022"
+output:
+  html_document:
+    fig_caption: yes
+  pdf_document: default
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+```{r}
+.libPaths("C:/Users/mohebg/Desktop/R_packages")
+  library(AnnotationHub)
+  library(Rsubread)
+  library(rtracklayer)
+  library(Biostrings)
+  library(Rfastp)
+  library(epiwraps)
+library(utils)
+```
+
+
+```{r}
+ah <- AnnotationHub()
+ensdb <- ah[["AH89211"]]
+```
+
+```{r}
+
+download.file("https://www.encodeproject.org/files/ENCFF001LJN/@@download/ENCFF001LJN.fastq.gz" , dest="raw/p300.fastq.gz")
+
+
+```
+```{bash}
+.check_if_unix <<- function() {
+  return(NULL)
+}
+assignInNamespace(".check_if_unix", .check_if_unix, ns = "fastqcr")
+```
+
+
+
+```{bash}
+
+conda install -c bioconda fastqc
+
+```
+```{r}
+dir.create("rfastp.trimmed")
+```
+
+```{r}
+qc <- Rfastp::rfastp("p300.fastq.gz", outputFastq="rfastp.trimmed/Myc", 
+                     maxNfilter=0, thread=4, overrepresentationAnalysis=TRUE)
+```
+
+```{r}
+Rfastp::curvePlot(qc, curve="content_curves")
+```
+
+
+
+```{r}
+# Alignment
+## Using Rsubread
+### Building a genome index for mapping
+
+genome <- ah[["AH82552"]]
+
+```
+
+```{r}
+dir.create("genome")
+```
+
+
+```{r}
+export(import.2bit(genome), "genome/genome.fasta.gz", compress=TRUE)
+```
+
+
+```{r}
+Rsubread::buildindex("genome/rsubread", reference="genome/genome.fasta.gz")
+```
+```{r}
+dir.create("aligned")
+align.stats <- Rsubread::align(index="genome/rsubread", type="dna",
+                               output_file="aligned/Myc.bam",
+                               readfile1="rfastp.trimmed/Myc_R1.fastq.gz", 
+                               nthreads=4, sortReadsByCoordinates=TRUE)
+align.stats
+```
+
+```{r}
+
+# Peak calling
+peaks <- callPeaks("aligned/Myc.bam")
+# if we want to save it as a bed file:
+rtracklayer::export.bed(peaks, "peaks/peaks.bed")
+
+```
+
+
+```{r}
+bam <- GenomicAlignments::readGAlignments("aligned/Myc.bam")
+```
+
+
+```{r}
+# Generating coverage tracks
+dir.create("tracks")
+bam2bw("aligned/Myc.bam", "tracks/Myc_full.bw", binWidth=10, extend=50, scaling=TRUE, paired = FALSE,splitByChr = 1)
+bam2bw("aligned/Myc.bam", "tracks/Myc.bw", binWidth=10, extend=50, scaling=TRUE, paired = FALSE, splitByChr = 2)
+```
+
+
+
+```{r}
+plotSignalTracks(list(full="tracks/Myc_full.bw", binned="tracks/Myc.bw"), region=peaks[1], extend=500)
+```
+
+```{r}
+plotSignalTracks(list(signal="tracks/Myc.bw", peaks=peaks), region="pfkfb3", ensdb=ensdb)
+plotSignalTracks(c("aligned/Myc.bam"),region="pfkfb3", type = "alignment", ensdb=ensdb, transcripts="full")
+```
+
+
+
+```{r}
+# Basic peak annotation
+
+```{r}
+peakAnno <- annotateRegions(peaks, ensdb)
+table(peakAnno$class)
+```
+
+```{r}
+```{r}
+length(peaks)
+head(peaks)
+```
+[1] 24329
+
+
+GRanges object with 6 ranges and 2 metadata columns:
+      seqnames          ranges strand |        name     score
+         <Rle>       <IRanges>  <Rle> | <character> <numeric>
+  [1]        1   666651-666900      * |        <NA>   2.49651
+  [2]        1 1577051-1577300      * |        <NA>   2.69062
+  [3]        1 1622551-1622800      * |        <NA>   3.10009
+  [4]        1 1625951-1626200      * |        <NA>   2.43450
+  [5]        1 1821051-1821300      * |        <NA>   2.95516
+  [6]        1 1874451-1874700      * |        <NA>   2.93860
+  -------
+  seqinfo: 234 sequences from an unspecified genome; no seqlengths
+
+
+
+
+
+```{r}
+length(peaks)
+head(peaks)
+
+strong_peaks <- peaks[peaks$score>median(peaks$score)]
+strongpeaksDF <- as.data.frame(strong_peaks)
+
+
+length(strong_peaks)
+```
+[1] 12152
+
+```{r}
+peakSignals <- signal2Matrix("tracks/Myc.bw", regions=strong_peaks, extend=2000, w=20)
+```
+
+
+
