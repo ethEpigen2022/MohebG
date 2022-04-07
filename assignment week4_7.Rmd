@@ -1,0 +1,201 @@
+---
+title: "assignment week4"
+author: "Moheb Ghobrial"
+date: "3/26/2022"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+
+```{r}
+.libPaths("C:/Users/mohebg/Desktop/R_packages")
+  library(AnnotationHub)
+  library(Rsubread)
+  library(rtracklayer)
+  library(Biostrings)
+  library(Rfastp)
+  library(epiwraps)
+  library(utils)
+  library(GenomicRanges )
+```
+
+
+```{r}
+ah <- AnnotationHub()
+ensdb <- ah[["AH89211"]]
+```
+
+
+```{r}
+setwd("F:/courses/ETHepigen2022/week04")
+```
+
+```{r}
+download.file("https://www.encodeproject.org/files/ENCFF204SXD/@@download/ENCFF204SXD.bed.gz",dest="H3K4me3_ENCFF204SXD.bed.gz")
+#website used: https://www.encodeproject.org/experiments/ENCSR000CGO/
+#then pressed on file details to get the file link
+```
+
+```{r}
+H3K4me3peaks <-import("H3K4me3_ENCFF204SXD.bed.gz", format="NarrowPeak")
+```
+
+
+
+```{r}
+head(H3K4me3peaks)
+#note that NCBI based data has "chr" at the beginning, while ensemble based data doesn't, while encode is something in between it uses gene models from ensemble (gencode), while it has the "chr" at the beginning like NCBI
+```
+
+```{r error=TRUE}
+head(peaks)
+```
+```{r}
+GenomeInfoDb::seqlevelsStyle(H3K4me3peaks)
+```
+```{r error=TRUE}
+GenomeInfoDb::seqlevelsStyle(peaks)
+```
+```{r}
+GenomeInfoDb::seqlevelsStyle(H3K4me3peaks) <- "Ensembl"
+```
+
+```{r}
+GenomeInfoDb::seqlevelsStyle(H3K4me3peaks)
+```
+```{r}
+head(H3K4me3peaks)
+#notice now the "chr" at the begining is removed 
+```
+
+
+
+
+```{r error=TRUE}
+overlap_H3K4me3 <- overlapsAny(H3K4me3peaks,peaks)
+head(overlap_H3K4me3)
+```
+
+```{r error=TRUE}
+sum(overlap_H3K4me3 <- overlapsAny(H3K4me3peaks,peaks))
+```
+
+```{r error=TRUE}
+download.file("https://www.encodeproject.org/files/ENCFF147SYC/@@download/ENCFF147SYC.bed.gz",dest="H3K4me1_ENCFF147SYC.bed.gz")
+#website used: https://www.encodeproject.org/experiments/ENCSR000ADK/
+#then pressed on file details to get the file link
+```
+```{r error=TRUE}
+H3K4me1peaks <-import("H3K4me1_ENCFF147SYC.bed.gz", format="NarrowPeak")
+```
+
+
+
+```{r error=TRUE}
+head(H3K4me1peaks)
+#note that NCBI based data has "chr" at the beginning, while ensemble based data doesn't, while encode is something in between it uses gene models from ensemble (gencode), while it has the "chr" at the beginning like NCBI
+```
+
+```{r error=TRUE}
+GenomeInfoDb::seqlevelsStyle(H3K4me1peaks)
+```
+```{r error=TRUE}
+GenomeInfoDb::seqlevelsStyle(H3K4me1peaks) <- "Ensembl"
+```
+
+```{r error=TRUE}
+head(H3K4me1peaks)
+```
+
+```{r error=TRUE}
+overlap_H3K4me1 <- overlapsAny(H3K4me1peaks,peaks)
+head(overlap_H3K4me1)
+```
+
+```{r error=TRUE}
+sum(overlap_H3K4me1 <- overlapsAny(H3K4me1peaks,peaks))
+```
+
+
+```{r error=TRUE}
+download.file("https://www.encodeproject.org/files/ENCFF194TQD/@@download/ENCFF194TQD.bed.gz",dest="H3K27ac_ENCFF194TQD.bed.gz")
+#website used: https://www.encodeproject.org/experiments/ENCSR000CGQ/
+#then pressed on file details to get the file link
+```
+
+```{r error=TRUE}
+H3K27acpeaks <-import("H3K27ac_ENCFF194TQD.bed.gz", format="NarrowPeak")
+```
+
+
+```{r error=TRUE}
+head(H3K27acpeaks)
+#note that NCBI based data has "chr" at the beginning, while ensemble based data doesn't, while encode is something in between it uses gene models from ensemble (gencode), while it has the "chr" at the beginning like NCBI
+```
+```{r error=TRUE}
+GenomeInfoDb::seqlevelsStyle(H3K27acpeaks)
+```
+```{r error=TRUE}
+GenomeInfoDb::seqlevelsStyle(H3K27acpeaks) <- "Ensembl"
+```
+
+```{r error=TRUE}
+GenomeInfoDb::seqlevelsStyle(H3K27acpeaks)
+```
+
+
+```{r error=TRUE}
+overlap_H3K27ac <- overlapsAny(H3K27acpeaks,peaks)
+head(overlap_H3K27ac)
+```
+```{r error=TRUE}
+sum(overlap_H3K27ac <- overlapsAny(H3K27acpeaks,peaks))
+```
+
+
+
+```{r error=TRUE}
+download.file("https://www.encodeproject.org/files/ENCFF558YNC/@@download/ENCFF558YNC.bed.gz",dest="H3K27me3_ENCFF558YNC.bed.gz")
+#website used: https://www.encodeproject.org/experiments/ENCSR000CFN/
+#then pressed on file details to get the file link
+```
+
+```{r error=TRUE}
+H3K27me3peaks <-import("H3K27me3_ENCFF558YNC.bed.gz", format="NarrowPeak")
+```
+
+```{r error=TRUE}
+head(H3K27me3peaks)
+#note that NCBI based data has "chr" at the beginning, while ensemble based data doesn't, while encode is something in between it uses gene models from ensemble (gencode), while it has the "chr" at the beginning like NCBI
+```
+```{r error=TRUE}
+GenomeInfoDb::seqlevelsStyle(H3K27me3peaks)
+```
+```{r error=TRUE}
+GenomeInfoDb::seqlevelsStyle(H3K27me3peaks) <- "Ensembl"
+```
+
+```{r error=TRUE}
+GenomeInfoDb::seqlevelsStyle(H3K27me3peaks)
+```
+```{r error=TRUE}
+overlap_H3K27me3 <- overlapsAny(H3K27me3peaks,peaks)
+head(overlap_H3K27me3)
+```
+
+```{r error=TRUE}
+sum(overlap_H3K27me3 <- overlapsAny(H3K27me3peaks,peaks))
+```
+
